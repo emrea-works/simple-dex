@@ -1,0 +1,26 @@
+{
+  "name": "a-simple-dex",
+  "version": "0.0.0",
+  "description": "A Simple DEX App on Study Purpose",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "git+https://github.com/emrea-works/simple-dex.git",
+  "keywords": [
+    "dex",
+    "web3",
+    "openzeppelin",
+    "wallet"
+  ],
+  "author": "emrea-works",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/emrea-works/simple-dex/issues"
+  },
+  "homepage": "https://github.com/emrea-works/simple-dex#readme",
+  "private": null,
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.2"
+  }
+}

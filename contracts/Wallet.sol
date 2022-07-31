@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <0.8.15;
 
 // ERC20 Proposal's Interface Source
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -8,7 +8,7 @@ import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 contract Wallet is Ownable {
-  use SafeMath for uint256;
+  using SafeMath for uint256;
   // Storage Design
   struct Token {
     bytes32 ticker;
@@ -25,7 +25,7 @@ contract Wallet is Ownable {
   mapping(address => mapping(bytes32 => uint256)) public balances;
   // function: add tokens, making external saves from gas consumption
   // modifier: control whether token exists
-  modifer tokenExist(bytes32 ticker) {
+  modifier tokenExist(bytes32 ticker) {
     require(tokenMapping[ticker].tokenAddress != address(0), "Token doesn't exist");
     _;
   }
@@ -36,7 +36,7 @@ contract Wallet is Ownable {
   }
   // function: deposit
   function deposit(uint amount, bytes32 ticker) tokenExist(ticker) external {
-    require(tokenMapping[ticker].tokenAddress) != address(0));
+    require(tokenMapping[ticker].tokenAddress != address(0));
     balances[msg.sender][ticker] = balances[msg.sender][ticker].add(amount);
     IERC20(tokenMapping[ticker].tokenAddress).transferFrom(msg.sender, address(this), amount);
   }

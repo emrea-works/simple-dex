@@ -5,8 +5,9 @@ pragma solidity >=0.6.0 <0.8.0;
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // Safety Contract which is Overflow-proof Math Operations
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
-contract Wallet {
+contract Wallet is Ownable {
   use SafeMath for uint256;
   // Storage Design
   struct Token {
@@ -18,18 +19,24 @@ contract Wallet {
   bytes32[] public tokenList;
   // mapping: address given, amount of currency ticker symbols (bytes32) returns
   /*
-   * @dev: currency symbols could be string type but when we need to compare
-   * values string is not the type at compasion
+   * currency symbols could be string type but when we need to compare
+   * values string is not the right type for comparison
    */
   mapping(address => mapping(bytes32 => uint256)) public balances;
   // function: add tokens, making external saves from gas consumption
-  function addToken(bytes32 ticker, address tokenAddress) external {
+  // modifier: control whether token exists
+  modifer tokenExist(bytes32 ticker) {
+    require(tokenMapping[ticker].tokenAddress != address(0), "Token doesn't exist");
+    _;
+  }
+
+  function addToken(bytes32 ticker, address tokenAddress) onlyOwner external {
     tokenMapping[ticker] = Token(ticker, tokenAddress);
     tokenList.push(ticker);
   }
   // function: deposit
-  function deposit(uint amount, bytes32 ticker) external {
-    require(msg.value >= amount, "Funds are nor equal neither grater than mentioned value.");
+  function deposit(uint amount, bytes32 ticker) tokenExist(ticker) external {
+    require(tokenMapping[ticker].tokenAddress) != address(0));
     balances[msg.sender][ticker] = balances[msg.sender][ticker].add(amount);
     IERC20(tokenMapping[ticker].tokenAddress).transferFrom(msg.sender, address(this), amount);
   }
@@ -45,7 +52,7 @@ contract Wallet {
    * who has interacted to the contract with their private key with the amount
    * that they required and sent through parameters.
    */
-  function withdraw(uint amount, bytes32 ticker) external {
+  function withdraw(uint amount, bytes32 ticker) tokenExist(ticker) external {
     require(balances[msg.sender][ticker] >= amount, "Balances are not sufficient");
     require(tokenMapping[ticker].tokenAddress != address(0));
     balances[msg.sender][ticker] = balances[msg.sender][ticker].sub(amount);

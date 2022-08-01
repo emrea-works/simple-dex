@@ -23,16 +23,18 @@ contract Wallet is Ownable {
    * values string is not the right type for comparison
    */
   mapping(address => mapping(bytes32 => uint256)) public balances;
-  // function: add tokens, making external saves from gas consumption
+  // event: when a token added by user, token sumbol and token address
+  event tokenAdded(address sender, bytes32 ticker, address tokenAddress);
   // modifier: control whether token exists
   modifier tokenExist(bytes32 ticker) {
     require(tokenMapping[ticker].tokenAddress != address(0), "Token doesn't exist");
     _;
   }
-
+  // function: add tokens, making external saves from gas consumption
   function addToken(bytes32 ticker, address tokenAddress) onlyOwner external {
     tokenMapping[ticker] = Token(ticker, tokenAddress);
     tokenList.push(ticker);
+    emit tokenAdded(msg.sender, ticker, tokenMapping[ticker].tokenAddress);
   }
   // function: deposit
   function deposit(uint amount, bytes32 ticker) tokenExist(ticker) external {

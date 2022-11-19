@@ -1,4 +1,8 @@
-pragma solidity >=0.6.0 <0.8.0
+pragma solidity >=0.6.0 <0.8.15;
+pragma experimental ABIEncoderV2;
+
+import './Wallet.sol';
+
 contract Dex is Wallet {
 
   enum Side {
@@ -14,14 +18,14 @@ contract Dex is Wallet {
     uint price;
   }
 
-  mapping(bytes32 => mapping(uint => Order[])) orderBook;
+  mapping(bytes32 => mapping(uint => Order[])) public orderBook;
 
   function getOrderBook(bytes32 ticker, Side side) public view returns(Order[] memory) {
-    return orderBook[ticker][uint(side)]
+    return orderBook[ticker][uint(side)];
   }
 
-  function createLimitOrder() {
-    
-  }
+  /* function createLimitOrder() {
+
+  } */
 
 }

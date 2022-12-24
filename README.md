@@ -14,5 +14,3 @@ If you'd like to fork this, please build responsibly.
 - Keep developing in Decentral Architecture
 - Don't build greedy, build with passion
 - Copy and read this list every time before continue buidling
-
-Web3 is not only for gaming, take it serious, relax and release the greed.

@@ -29,6 +29,11 @@ contract("Dex", (accounts) => {
     orderAmount,
     pairPrice
   ) {
+    // conditional
+    if (!wallet) {
+      console.error("wallet isn't defined yet");
+      return;
+    }
     const newOrder = {
       id: orders.length,
       trader: msgSender,
@@ -45,15 +50,12 @@ contract("Dex", (accounts) => {
       sellOrders.push(newOrder);
     }
     orders.push(newOrder);
-    /**
-     * maybe instead of sorting JS way, better to find a way to insert
-     * the order in the right place in the array
-     */
+
     buyOrders.sort((a, b) => {
-      return a.amount - b.amount;
+      return b.amount - a.amount;
     });
     sellOrders.sort((a, b) => {
-      return b.amount - a.amount;
+      return a.amount - b.amount;
     });
 
     return newOrder;
@@ -62,7 +64,6 @@ contract("Dex", (accounts) => {
   function getLimit(ordersType) {
     let limit = 0;
     ordersType.forEach((order) => {
-      // if (web3.utils.toWei(order.amount) > limit) {
       if (order.amount > limit) {
         limit = order.amount;
       }
@@ -80,31 +81,30 @@ contract("Dex", (accounts) => {
   it("should pass while the user must have ETH deposited such that deposited eth >= buy order value", async () => {
     // Define
     msgSender = accounts[0];
-    buyOrders = [];
+    const symbol = "ETH";
     // Apply
-    createLimitOrder(accounts[9], orderSide.BUY, tickerETH, 64, "2000");
-    createLimitOrder(accounts[5], orderSide.BUY, tickerETH, 18, "2000");
-    createLimitOrder(accounts[3], orderSide.BUY, tickerETH, 42, "2000");
-    createLimitOrder(accounts[6], orderSide.BUY, tickerETH, 12, "2000");
-    createLimitOrder(accounts[8], orderSide.BUY, tickerETH, 88, "2000");
-
-    await eth.approve(dex.address, 100);
-    await dex.addToken(tickerETH, eth.address, { from: msgSender });
-    await dex.deposit(90, tickerETH);
-    let balance = await dex.balances(msgSender, tickerETH);
-    // Report
-    console.table(buyOrders);
-    console.log(" ");
-    console.log(`Dex Balance  : ${web3.utils.BN(balance).toNumber()}`);
-    console.log(
-      `Highest limit: ${web3.utils.BN(getLimit(buyOrders)).toNumber()}`
+    const walletBalance = await wallet.balances(
+      msgSender,
+      web3.utils.fromUtf8(symbol)
     );
+    const order = createLimitOrder(
+      msgSender,
+      orderSide.BUY,
+      web3.utils.fromUtf8(symbol),
+      "84",
+      "2000"
+    );
+    // Report
+    console.log(`walletBalance: ${walletBalance} ${symbol}`);
+    console.table({ order });
     // Assert
     await truffleAssert.passes(
       assert.isAtLeast(
-        web3.utils.BN(balance).toNumber(),
-        web3.utils.BN(getLimit(buyOrders)).toNumber(),
-        "⛔ Dex WASN'T topped enough by the user for the limit amount"
+        web3.utils.BN(walletBalance).toNumber(),
+        web3.utils.BN(order.amount).toNumber(),
+        `⛔ Not enough asset to create order (order amount is higher than user's asset)
+        Balance: ${walletBalance} ${symbol} < Tried Order: ${order.amount} ${symbol}
+        `
       )
     );
   });
@@ -112,35 +112,54 @@ contract("Dex", (accounts) => {
   it("should pass while the user must have enough tokens deposited such that token balance >= sell order amount", async () => {
     // Define
     msgSender = accounts[0];
-    buyOrders = [];
-    console.log(`buyOrders: ${buyOrders}`);
+    const symbol = "LINK";
     // Apply
-    createLimitOrder(accounts[5], orderSide.BUY, tickerLINK, 22, "150");
-    createLimitOrder(accounts[3], orderSide.BUY, tickerLINK, 36, "150");
-    createLimitOrder(accounts[6], orderSide.BUY, tickerLINK, 10, "150");
-
-    await link.approve(dex.address, 100);
-    await dex.addToken(tickerLINK, link.address, { from: msgSender });
-    await dex.deposit(50, tickerLINK);
-    let balance = await dex.balances(msgSender, tickerLINK);
-    // Report
-    console.table(buyOrders);
-    console.log(" ");
-    console.log(`Dex Balance  : ${web3.utils.BN(balance).toNumber()}`);
-    console.log(
-      `Highest limit: ${web3.utils.BN(getLimit(buyOrders)).toNumber()}`
+    const walletBalance = await wallet.balances(
+      msgSender,
+      web3.utils.fromUtf8(symbol)
     );
+    const order = createLimitOrder(
+      msgSender,
+      orderSide.BUY,
+      web3.utils.fromUtf8(symbol),
+      "42",
+      "2000"
+    );
+    // Report
+    console.log(`walletBalance: ${walletBalance} ${symbol}`);
+    console.table({ order });
     // Assert
     await truffleAssert.passes(
       assert.isAtLeast(
-        web3.utils.BN(balance).toNumber(),
-        web3.utils.BN(getLimit(buyOrders)).toNumber(),
-        "⛔ Dex WASN'T topped enough LINK by the user for the limit amount"
+        web3.utils.BN(walletBalance).toNumber(),
+        web3.utils.BN(order.amount).toNumber(),
+        `⛔ Not enough asset to create order (order amount is higher than user's asset)
+        Balance: ${walletBalance} ${symbol} < Tried Order: ${order.amount} ${symbol}
+        `
       )
     );
   });
 
   it("should pass while the buy order book should be ordered on price from highest to lowest starting at index 0", async () => {
-
+    // Define
+    buyOrders = [];
+    const msgSender = accounts[0];
+    const ticker = web3.utils.fromUtf8("LINK");
+    // Apply
+    createLimitOrder(msgSender, orderSide.BUY, ticker, "32", "30");
+    createLimitOrder(msgSender, orderSide.BUY, ticker, "18", "30");
+    createLimitOrder(msgSender, orderSide.BUY, ticker, "64", "30");
+    createLimitOrder(msgSender, orderSide.BUY, ticker, "05", "30");
+    const highestOrder = getLimit(buyOrders);
+    // Report
+    console.table(buyOrders);
+    // Assert
+    await truffleAssert.passes(
+      assert.equal(
+        buyOrders[0].amount,
+        highestOrder,
+        `⛔ Highest Order is not the first element of orders list`
+      )
+    );
   });
 });
